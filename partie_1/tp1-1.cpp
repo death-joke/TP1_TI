@@ -16,58 +16,53 @@ int main()
 
     int fresqueWidth = 1707;
     int fresqueHeight = 775;
-    cv::Mat fresque(fresqueHeight, fresqueWidth, CV_8UC3, cv::Scalar(255, 255, 255)); // empty fresque
+    cv::Mat fresque(fresqueHeight, fresqueWidth, CV_8UC4, cv::Scalar(255, 255, 255)); // empty fresque
 
     while (fragmentFile >> index >> posx >> posy >> angle)
     {
-        if (index < 400)
+
+        // Load the fragment
+        std::string fragmentFileName = "../frag_eroded/frag_eroded_" + std::to_string(index) + ".png";
+        cv::Mat fragment = cv::imread(fragmentFileName, -1);
+
+        if (fragment.empty())
         {
+            std::cerr << "Erreur : Impossible de charger l'image " << fragmentFileName << std::endl;
+            return 1;
+        }
 
-            // Load the fragment
-            std::string fragmentFileName = "../frag_eroded/frag_eroded_" + std::to_string(index) + ".png";
-            cv::Mat fragment = cv::imread(fragmentFileName);
+     
 
-            if (fragment.empty())
+        // Rotate the fragment
+        cv::Mat rotationMatrix = cv::getRotationMatrix2D(cv::Point(fragment.cols / 2, fragment.rows / 2), angle, 1);
+        cv::Mat rotatedFragment;
+        cv::warpAffine(fragment, rotatedFragment, rotationMatrix, fragment.size());
+
+        // Coordinate of the top left corner of the fragment
+        int x = static_cast<int>(posx - rotatedFragment.cols / 2);
+        int y = static_cast<int>(posy - rotatedFragment.rows / 2);
+
+        // copy the fragment to the fresque
+        for (int i = 0; i < rotatedFragment.rows; i++)
+        {
+            for (int j = 0; j < rotatedFragment.cols; j++)
             {
-                std::cerr << "Erreur : Impossible de charger l'image " << fragmentFileName << std::endl;
-                return 1;
-            }
-
-            // position of the fragment
-            std::cout << "Index: " << index << ", Position: (" << posx << ", " << posy << "), Angle: " << angle << std::endl;
-
-            // Rotate the fragment
-            cv::Mat rotationMatrix = cv::getRotationMatrix2D(cv::Point(fragment.cols / 2, fragment.rows / 2), angle, 1);
-            cv::Mat rotatedFragment;
-            cv::warpAffine(fragment, rotatedFragment, rotationMatrix, fragment.size());
-
-            // Placez le fragment dans l'image de fresque
-            int x = static_cast<int>(posx - rotatedFragment.cols / 2);
-            int y = static_cast<int>(posy - rotatedFragment.rows / 2);
-
-            // copy the fragment to the fresque
-            for (int i = 0; i < rotatedFragment.rows; i++)
-            {
-                for (int j = 0; j < rotatedFragment.cols; j++)
+                cv::Vec4b &pixel = rotatedFragment.at<cv::Vec4b>(i, j);
+                if (pixel[3] > 0)
                 {
-                    if (rotatedFragment.at<cv::Vec3b>(i, j) != cv::Vec3b(0, 0, 0))
-
-                    {
-                        fresque.at<cv::Vec3b>(y + i, x + j) = rotatedFragment.at<cv::Vec3b>(i, j);
-                    }
+                    fresque.at<cv::Vec4b>(y + i, x + j) = pixel;
                 }
             }
         }
+    
     }
+        // Save l'image de la fresque finale
+        cv::imwrite("fresque_reconstruite.png", fresque);
 
-    // Enregistrez l'image de la fresque finale
-    cv::imwrite("fresque_reconstruite.png", fresque);
+        // print the fresque
+        cv::imshow("Fresque", fresque);
+        cv::waitKey(0);
 
-    // print the fresque
-    // cv::namedWindow("fresque image", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Fresque", fresque);
-    cv::waitKey(0);
-
-    fragmentFile.close();
-    return 0;
+        fragmentFile.close();
+        return 0;
 }
