@@ -2,6 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <cmath>
+#include <opencv2/opencv.hpp>
 
 struct Fragment {
     int index;
@@ -34,31 +35,50 @@ int main() {
 
     // Calculer la précision
     double totalWellLocalizedArea = 0.0;
+    double totalFragmentNotFromFresque = 0.0;
     double totalFresqueArea = 0.0;
 
     for (const Fragment& solutionFragment : solutionFragments) {
+        bool inThefreque = false;
+            std::string fragmentFileName = "../frag_eroded/frag_eroded_" + std::to_string(solutionFragment.index) + ".png";
+            cv::Mat fragment = cv::imread(fragmentFileName);
+
+            //print fragment size
+            std::cout << "Fragment " << solutionFragment.index << " : " << fragment.cols << "x" << fragment.rows << std::endl;
+            totalFresqueArea += fragment.cols * fragment.rows;
+
+
         for (const Fragment& actualFragment : fragments) {
             if (solutionFragment.index == actualFragment.index) {
+                inThefreque = true;
                 // Vérifier la localisation
                 bool wellLocalized = (std::abs(solutionFragment.x - actualFragment.x) <= delta_x) &&
                                      (std::abs(solutionFragment.y - actualFragment.y) <= delta_y) &&
                                      (std::abs(solutionFragment.alpha - actualFragment.alpha) <= delta_alpha);
+                std::cout << "Fragment " << solutionFragment.index << " : " << (wellLocalized ? "bien localisé" : "mal localisé") << std::endl;
 
                 if (wellLocalized) {
-                    // Ajouter la surface du fragment bien localisé
-                    // Vous devez avoir une logique pour calculer la surface d'un fragment ici
-                    // Par exemple, vous pouvez utiliser des dimensions spécifiques des fragments.
-                    // totalWellLocalizedArea += surfaceFragment(solutionFragment);
+                    // Calculer la surface bien localisée
+                    totalWellLocalizedArea += fragment.cols * fragment.rows;
+                    
                 }
             }
+        }
+        if(!inThefreque) {
+            std::cout << "Fragment " << solutionFragment.index << " : " << "n'appartient pas à la fresque" << std::endl;
+            totalFragmentNotFromFresque += fragment.cols * fragment.rows;
         }
     }
 
     // Calculer la surface totale des fragments de la fresque
     // Vous devez avoir une logique pour calculer la surface totale des fragments ici.
+    //print all the surface 
+    std::cout << "Surface totale des fragments de la fresque : " << totalFresqueArea << std::endl;
+    std::cout << "Surface totale des fragments bien localisés : " << totalWellLocalizedArea << std::endl;
+    std::cout << "Surface totale des fragments n'appertenant pas à la fresque : " << totalFragmentNotFromFresque << std::endl;
 
     // Calculer la précision p
-    double p = totalWellLocalizedArea / totalFresqueArea;
+    double p = (totalWellLocalizedArea-totalFragmentNotFromFresque) / totalFresqueArea;
 
     // Afficher la précision
     std::cout << "Précision de localisation (p) : " << p << std::endl;
