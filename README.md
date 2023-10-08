@@ -69,4 +69,4 @@ Nous avons résolus le probléme en changeant le type de la variables de stockag
 
 ### Probléme de positionnement des fragment 
 
-Le second probléme rencontrer à été le placement des fragment, en effet lorque l'on utilisait la fonction de opencv : `.copyTo()` il semblerait que certainnes parties des fragments étaient copier à l'extérieur de la fresque, ce qui entrainiat une erreur lors du runtime de notre fonction. Nous avons résolue ce problémes en copiant chaque pixel à la place d'utiliser la fonction dejà existenete de opencv.
+Le second probléme rencontrer à été le placement des fragment, en effet lorque l'on utilisait la fonction de opencv : `.copyTo()` il semblerait que certainnes parties des fragments étaient copier à l'extérieur de la fresque, ce qui entrainiat une erreur lors du runtime de notre fonction. Nous avons résolue ce problémes en copiant chaque pixel à la place d'utiliser la fonction dejà existente de opencv.
